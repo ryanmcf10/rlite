@@ -1,0 +1,9 @@
+*.dll
+*.pyc
+__pycache__/
+Include/
+fonts/
+Scripts/
+Lib/
+tcl/
+pip-selfcheck.json
