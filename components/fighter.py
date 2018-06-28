@@ -3,6 +3,7 @@ import libtcodpy as libtcod
 
 from game_messages import Message
 
+
 class Fighter:
     def __init__(self, hp, defense, power):
         self.max_hp = hp
@@ -26,11 +27,12 @@ class Fighter:
         damage = self.power - target.fighter.defense
 
         if damage > 0:
-            results.append({'message':Message('{} attacks {} for {} hit points!'.format(self.owner.name.capitalize(), target.name, str(damage)), libtcod.white)})
+            results.append({'message': Message('{0} attacks {1} for {2} hit points.'.format(
+                self.owner.name.capitalize(), target.name, str(damage)), libtcod.white)})
             results.extend(target.fighter.take_damage(damage))
-
         else:
-            results.append({'message': Message('{} attacks {} but does no damage!'.format(self.owner.name.capitalize(), target.name), libtcod.white)})
+            results.append({'message': Message('{0} attacks {1} but does no damage.'.format(
+                self.owner.name.capitalize(), target.name), libtcod.white)})
 
         return results
 
@@ -44,11 +46,10 @@ def create_fighter(fighter_type):
         return Fighter(hp=30, defense=2, power=5)
 
     elif fighter_type == FighterType.ORC:
-        return Fighter(hp=10, defense=0, power=3)
+        return Fighter(hp=10, defense=0, power=2)
 
     elif fighter_type == FighterType.TROLL:
         return Fighter(hp=16, defense=1, power=4)
 
     else:
         return None
-

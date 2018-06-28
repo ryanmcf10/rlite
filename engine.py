@@ -1,14 +1,15 @@
 import libtcodpy as libtcod
 
+from components.fighter import *
+from death_functions import kill_monster, kill_player
 from entity import Entity, get_blocking_entities_at_location
-from input_handlers import handle_keys
-from render_functions import render_all, clear_all, RenderOrder
-from map_objects.game_map import GameMap
 from fov_functions import initialize_fov, recompute_fov
 from game_messages import MessageLog
 from game_states import GameStates
-import components.fighter as fighter
-from death_functions import kill_player, kill_monster
+from input_handlers import handle_keys
+from map_objects.game_map import GameMap
+from render_functions import clear_all, render_all, RenderOrder
+
 
 def main():
     screen_width = 80
@@ -22,9 +23,11 @@ def main():
     message_width = screen_width - bar_width - 2
     message_height = panel_height - 1
 
+    # Size of the map
     map_width = 80
     map_height = 43
 
+    # Some variables for the rooms in the map
     room_max_size = 10
     room_min_size = 6
     max_rooms = 30
@@ -42,19 +45,20 @@ def main():
         'light_ground': libtcod.Color(200, 180, 50)
     }
 
-
-    player = Entity(0, 0, '@', libtcod.white, 'Player', blocks=True, render_order=RenderOrder.ACTOR, fighter=fighter.create_fighter(fighter.FighterType.PLAYER))
+    fighter_component = create_fighter(FighterType.PLAYER)
+    player = Entity(0, 0, '@', libtcod.white, 'Player', blocks=True, render_order=RenderOrder.ACTOR, fighter=fighter_component)
     entities = [player]
 
     libtcod.console_set_custom_font('fonts/arial10x10.png', libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_TCOD)
 
-    libtcod.console_init_root(screen_width, screen_height, 'libtcod tutorial', False)
+    libtcod.console_init_root(screen_width, screen_height, 'rlite', False)
 
     con = libtcod.console_new(screen_width, screen_height)
     panel = libtcod.console_new(screen_width, panel_height)
 
     game_map = GameMap(map_width, map_height)
-    game_map.make_map(max_rooms, room_min_size, room_max_size, map_width, map_height, player, entities, max_monsters_per_room)
+    game_map.make_map(max_rooms, room_min_size, room_max_size, map_width, map_height, player, entities,
+                      max_monsters_per_room)
 
     fov_recompute = True
 
@@ -67,13 +71,16 @@ def main():
 
     game_state = GameStates.PLAYER_TURN
 
+    counter = 0
     while not libtcod.console_is_window_closed():
+        counter += 1
         libtcod.sys_check_for_event(libtcod.EVENT_KEY_PRESS | libtcod.EVENT_MOUSE, key, mouse)
 
         if fov_recompute:
             recompute_fov(fov_map, player.x, player.y, fov_radius, fov_light_walls, fov_algorithm)
 
-        render_all(con, panel, entities, player, game_map, fov_map, fov_recompute, message_log, screen_width, screen_height, bar_width, panel_height, panel_y, mouse, colors)
+        render_all(con, panel, entities, player, game_map, fov_map, fov_recompute, message_log, screen_width,
+                   screen_height, bar_width, panel_height, panel_y, mouse, colors)
 
         fov_recompute = False
 
@@ -86,22 +93,23 @@ def main():
         move = action.get('move')
         exit = action.get('exit')
         fullscreen = action.get('fullscreen')
-        fov = action.get('fov')
 
         player_turn_results = []
+
+        if move:
+          print(str(counter))
 
         if move and game_state == GameStates.PLAYER_TURN:
             dx, dy = move
             destination_x = player.x + dx
             destination_y = player.y + dy
 
-            if not game_map.is_blocked(player.x + dx, player.y + dy):
+            if not game_map.is_blocked(destination_x, destination_y):
                 target = get_blocking_entities_at_location(entities, destination_x, destination_y)
 
                 if target:
                     attack_results = player.fighter.attack(target)
                     player_turn_results.extend(attack_results)
-
                 else:
                     player.move(dx, dy)
 
@@ -114,10 +122,6 @@ def main():
 
         if fullscreen:
             libtcod.console_set_fullscreen(not libtcod.console_is_fullscreen())
-
-        if fov:
-            fov_algorithm = fov
-            fov_recompute = True
 
         for player_turn_result in player_turn_results:
             message = player_turn_result.get('message')
@@ -159,9 +163,9 @@ def main():
 
                     if game_state == GameStates.PLAYER_DEAD:
                         break
-
             else:
                 game_state = GameStates.PLAYER_TURN
+
 
 if __name__ == '__main__':
     main()
