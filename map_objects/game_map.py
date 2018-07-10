@@ -1,6 +1,8 @@
 import libtcodpy as libtcod
 from random import randint
 
+from game_messages import Message
+
 from components.ai import BasicMonster
 from components.fighter import *
 from components.item import Item
@@ -11,6 +13,7 @@ from map_objects.rectangle import Rect
 from map_objects.tile import Tile
 
 from render_functions import RenderOrder
+from components.item_functions import heal, cast_lightning, cast_fireball, cast_confuse
 
 
 class GameMap:
@@ -67,12 +70,12 @@ class GameMap:
                     # flip a coin (random number that is either 0 or 1)
                     if randint(0, 1) == 1:
                         # first move horizontally, then vertically
-                        self.create_h_tunnel(prev_x, new_x, prev_y)
-                        self.create_v_tunnel(prev_y, new_y, new_x)
+                        self.create_horizontaltunnel(prev_x, new_x, prev_y)
+                        self.create_vertical_tunnel(prev_y, new_y, new_x)
                     else:
                         # first move vertically, then horizontally
-                        self.create_v_tunnel(prev_y, new_y, prev_x)
-                        self.create_h_tunnel(prev_x, new_x, new_y)
+                        self.create_vertical_tunnel(prev_y, new_y, prev_x)
+                        self.create_horizontaltunnel(prev_x, new_x, new_y)
 
                 self.place_entities(new_room, entities, max_monsters_per_room, max_items_per_room)
 
@@ -87,12 +90,12 @@ class GameMap:
                 self.tiles[x][y].blocked = False
                 self.tiles[x][y].block_sight = False
 
-    def create_h_tunnel(self, x1, x2, y):
+    def create_horizontaltunnel(self, x1, x2, y):
         for x in range(min(x1, x2), max(x1, x2) + 1):
             self.tiles[x][y].blocked = False
             self.tiles[x][y].block_sight = False
 
-    def create_v_tunnel(self, y1, y2, x):
+    def create_vertical_tunnel(self, y1, y2, x):
         for y in range(min(y1, y2), max(y1, y2) + 1):
             self.tiles[x][y].blocked = False
             self.tiles[x][y].block_sight = False
@@ -129,8 +132,24 @@ class GameMap:
             y = randint(room.y1 + 1, room.y2 - 1)
 
             if not any([entity for entity in entities if entity.x == x and entity.y == y]):
-                item_component = Item()
-                item = Entity(x, y, '!', libtcod.violet, 'Healing Potion', render_order=RenderOrder.ITEM, item=item_component)
+                item_chance = randint(0,100)
+
+                if item_chance < 70:
+                    item_component = Item(use_function=heal, amount=4)
+                    item = Entity(x, y, '!', libtcod.violet, 'Healing Potion', render_order=RenderOrder.ITEM, item=item_component)
+
+                elif item_chance < 80:
+                    item_component = Item(use_function=cast_fireball, targeting=True, targeting_message=Message('Left-click to throw a FIREBALL, right-click to cancel.', libtcod.light_cyan), damage=12, radius=3)
+                    item = Entity(x, y, '#', libtcod.orange, 'Fireball Scroll', render_order=RenderOrder.ITEM, item=item_component)
+
+                elif item_chance < 90:
+                    item_component = Item(use_function=cast_confuse, targeting=True, targeting_message=Message('Left-click an enemy to CONFUSE it, right-click to cancel.', libtcod.light_cyan))
+                    item = Entity(x, y, '#', libtcod.purple, 'Confusion Scroll', render_order=RenderOrder.ITEM, item=item_component)
+
+                else:
+                    item_component = Item(use_function=cast_lightning, damage=20, maximum_range=5)
+                    item = Entity(x, y, '#', libtcod.yellow, 'Lightning Scroll', render_order=RenderOrder.ITEM, item=item_component)
+
                 entities.append(item)
 
     def is_blocked(self, x, y):
