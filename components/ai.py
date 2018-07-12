@@ -1,4 +1,8 @@
+from random import randint
+
 import libtcodpy as libtcod
+
+from game_messages import Message
 
 
 class BasicMonster:
@@ -20,7 +24,7 @@ class BasicMonster:
 class ConfusedMonster:
     def __init__(self, previous_ai, number_of_turns=10):
         self.previous_ai = previous_ai
-        self.number_of_turns = nubmer_of_turns
+        self.number_of_turns = number_of_turns
 
     def take_turn(self, target, fov_map, game_map, entities):
         results = []
@@ -37,3 +41,5 @@ class ConfusedMonster:
         else:
             self.owner.ai = self.previous_ai
             results.append({'message': Message('The {} is not longer confused!'.format(self.owner.name), libtcod.red)})
+
+        return results
