@@ -7,3 +7,6 @@ Scripts/
 Lib/
 tcl/
 pip-selfcheck.json
+*.bak
+*.dat
+*.dir
